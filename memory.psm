@@ -7,171 +7,171 @@
 ;* File: memory.psm
 ;====================================================================================
 ;**********************   Constant Values  **********************             
-            CONSTANT dataBus		, 01
-			CONSTANT statusReg	    , 00 
+            CONSTANT dataBus		    , 01
+			CONSTANT statusReg	        , 00 
 			CONSTANT wradrReg1		, 0B ; port 11
 			CONSTANT wradrReg2		, 0C ; port 12
 			CONSTANT wrdataReg0		, 0E ; port 14
 			CONSTANT wrdataReg1		, 0F ; port 15
 			CONSTANT rddataReg0		, 10 ; port 16
 			CONSTANT rddataReg1		, 11 ; port 17
-			CONSTANT memrd			, 12 ; port 18
-			CONSTANT memwr			, 13 ; port 19
-			CONSTANT rdMIBstat		, 14 ; port 20  
+			CONSTANT memrd			    , 12 ; port 18
+			CONSTANT memwr			    , 13 ; port 19
+			CONSTANT rdMIBstat		    , 14 ; port 20  
 			 
-            NAMEREG  s0		    	, scratchbyte	; transmit/recieve byte register 
-			NAMEREG  s1		    	, checkstatus	; Comparator register
-            NAMEREG	 s2				, linecounter   ; keeps track of characters on screen  
-			NAMEREG  sB				, addr0			; memory pointer
-			NAMEREG  sC				, addr1			;keeps track of characters in memory 
-			NAMEREG  sD				, memCount		; traverse through memory 
+            NAMEREG  s0		    	        , scratchbyte	    ; transmit/recieve byte register 
+			NAMEREG  s1		    	        , checkstatus	    ; Comparator register
+            NAMEREG	s2				        , linecounter       ; keeps track of characters on screen  
+			NAMEREG  sB				        , addr0			    ; memory pointer
+			NAMEREG  sC				        , addr1			    ;keeps track of characters in memory 
+			NAMEREG  sD				        , memCount		; traverse through memory 
 			
 ;===============Initialize values and console output =============; 			 
-			LOAD 	 scratchbyte    , 00                                 		
-			LOAD	 checkstatus	, 00
-			LOAD	 linecounter	, 00 
-			LOAD 	 addr0			, 00
-			LOAD 	 addr1			, 00
-			LOAD 	 S4				, 00			
+			LOAD   scratchbyte               , 00                                 		
+			LOAD	 checkstatus	            , 00
+			LOAD	 linecounter	            , 00 
+			LOAD   addr0			                , 00
+			LOAD   addr1			                , 00
+			LOAD   S4				                , 00			
 			CALL 	 BANNER			
 ;******************************************************************			
 ;						 Start of Algorithm  
 ;******************************************************************			 
 START: 				
-			COMPARE  linecounter	, 29
-			JUMP 	 NZ				, RCVE 			
-			CALL     NEWLINE 
+			COMPARE  linecounter	        , 29
+			JUMP 	        NZ		                , RCVE 			
+			CALL           NEWLINE 
 			
 RCVE: 			
-			CALL	RECEIVE
+			CALL	        RECEIVE
 ;BEGIN PROCESSING RECIEVED BYTE 
 			
-			COMPARE	scratchbyte		, 08 	;backspace 
-			JUMP	NZ				, NOTBS
-			CALL    BACKSPACE
-			JUMP	START
+			COMPARE	scratchbyte		, 08 	                ;backspace 
+			JUMP	        NZ				        , NOTBS
+			CALL           BACKSPACE
+			JUMP	        START
 NOTBS: 			
-			COMPARE scratchbyte		, 0D	;CARRAGE RETURN
-			JUMP	NZ				, NOTCR
-			CALL 	NEWLINE
-			JUMP	START
+			COMPARE scratchbyte		, 0D	                    ;CARRAGE RETURN
+			JUMP	        NZ				        , NOTCR
+			CALL 	        NEWLINE
+			JUMP	        START
 NOTCR: 
-			COMPARE scratchbyte		,2A		;<*>
-			JUMP	NZ				,TRNSMIT
-			JUMP	MEMDUMP
-			JUMP	START
+			COMPARE scratchbyte		,2A		                ;<*>
+			JUMP	        NZ				        ,TRNSMIT
+			JUMP	        MEMDUMP
+			JUMP	        START
 TRNSMIT: 		
-			ADD		linecounter		,01 	; incrmt linecounter
-			CALL 	TRANSMIT
-			CALL 	SAVEMEM
-			JUMP	START
+			ADD		    linecounter		    ,01 	                    ; incrmt linecounter
+			CALL 	        TRANSMIT
+			CALL 	        SAVEMEM
+			JUMP	        START
 ;=================================;;=================================;							
 SAVEMEM: 
-			OUTPUT	addr0			, wradrReg1		; write ADDR reg 0
-			OUTPUT	addr1			, wradrReg2		; write ADDR reg 1
-			OUTPUT  scratchbyte		, wrdataReg0	; write DATA reg 0
-			LOAD	scratchbyte		, 2A			; <*>
-			OUTPUT  scratchbyte		, wrdataReg1 	; write DATA reg 1
-			OUTPUT 	scratchbyte		, memwr 	; Perform memory write
-			ADD		addr0			, 01		; inc addr
-			ADDCY	addr1			, 00							
+			OUTPUT	addr0			        , wradrReg1		; write ADDR reg 0
+			OUTPUT	addr1			        , wradrReg2		; write ADDR reg 1
+			OUTPUT     scratchbyte		, wrdataReg0	    ; write DATA reg 0
+			LOAD	        scratchbyte		, 2A			            ; <*>
+			OUTPUT     scratchbyte		, wrdataReg1 	    ; write DATA reg 1
+			OUTPUT 	scratchbyte		, memwr 	            ; Perform memory write
+			ADD		    addr0			        , 01		                ; inc addr
+			ADDCY	    addr1			        , 00							
 			RETURN
 ;=================================;			
 MEMDUMP: 		   
-		   COMPARE	addr0			, 00 
-		   JUMP		Z				, ENDDUMP
-		   LOAD		memCount		, 00 
+		   COMPARE	addr0			        , 00 
+		   JUMP		    Z				            , ENDDUMP
+		   LOAD		    memCount		    , 00 
 STARTDUMP:			   		   
-		   OUTPUT	memCount		, wradrReg1
-		   INPUT	scratchbyte		, memrd  		; Perform memory rd		   	
+		   OUTPUT	    memCount		    , wradrReg1
+		   INPUT	        scratchbyte		, memrd  		    ; Perform memory rd		   	
 MIBRDY:	   
-		   INPUT 	checkstatus		, rdMIBstat
-		   AND	    checkstatus     , 01 		    ; MASK STATUS REGISTER FOR MIB Ready BIT
-		   JUMP		Z				, MIBRDY		    		   
-		   input	scratchbyte		, rddataReg0
-		   CALL		TRANSMIT
-		   ADD		memCount		, 01 			; INC MEMORY POINTER
-		   COMPARE	addr0			, memCount 		; IS MEMORY POINTER AT CURRENT ADDR
-		   JUMP		NZ				, STARTDUMP
-		   LOAD		addr0			, 00			; RESET ADDRESS
+		   INPUT 	    checkstatus		, rdMIBstat
+		   AND	            checkstatus       , 01 		             ; MASK STATUS REGISTER FOR MIB Ready BIT
+		   JUMP		    Z				            , MIBRDY		    		   
+		   INPUT	        scratchbyte		, rddataReg0
+		   CALL		    TRANSMIT
+		   ADD		        memCount		    , 01 			        ; INC MEMORY POINTER
+		   COMPARE	addr0			        , memCount 		; IS MEMORY POINTER AT CURRENT ADDR
+		   JUMP		    NZ				        , STARTDUMP
+		   LOAD		    addr0			        , 00			            ; RESET ADDRESS
 ENDDUMP:		   		   
-			JUMP 	START
+			JUMP 	        START
 ;=================================; ;=================================;			
 ;=============== BACKSPACE Subroutine =============; 
 BACKSPACE:
-			COMPARE linecounter		, 00
-			JUMP	Z				, COUNTISZERO
-			LOAD	scratchbyte 	, 08		;BACKSPACE
-			CALL	TRANSMIT
-			LOAD	scratchbyte  	, 20		;SPACE
-			CALL	TRANSMIT 
-			LOAD	scratchbyte 	, 08		;BACKSPACE
-			CALL	TRANSMIT
-			SUB		linecounter		, 01 		; SUBTRACT line counter 	
+			COMPARE linecounter		    , 00
+			JUMP	        Z				            , COUNTISZERO
+			LOAD	        scratchbyte 	    , 08		                ;BACKSPACE
+			CALL	        TRANSMIT
+			LOAD	        scratchbyte  	    , 20		                ;SPACE
+			CALL	        TRANSMIT 
+			LOAD	        scratchbyte 	    , 08		                ;BACKSPACE
+			CALL	        TRANSMIT
+			SUB		    linecounter		    , 01 		            ; SUBTRACT line counter 	
 COUNTISZERO: 			
 			RETURN						
 ;=============== Prompt Subroutine =============; 
 PROMPT: 
-			LOAD	scratchbyte 	, 7E		;~
-			CALL	TRANSMIT
-			LOAD	scratchbyte  	, 24		;$
-			CALL	TRANSMIT 
+			LOAD	        scratchbyte 	    , 7E		                ;~
+			CALL	        TRANSMIT
+			LOAD	        scratchbyte  	    , 24		                ;$
+			CALL	        TRANSMIT 
 			RETURN 
 ;=============== NEWLINE Subroutine =============; 
 NEWLINE: 
-			LOAD	scratchbyte 	, 0D		;Line Feed
-			CALL	TRANSMIT
-			LOAD	scratchbyte  	, 0A		;Carage Return 
-			CALL	TRANSMIT 
-			CALL	PROMPT
-			LOAD	linecounter		, 00 			; Reset line counter 	
+			LOAD	        scratchbyte 	    , 0D		                ;Line Feed
+			CALL	        TRANSMIT
+			LOAD	        scratchbyte  	    , 0A		                ;Carage Return 
+			CALL	        TRANSMIT 
+			CALL	        PROMPT
+			LOAD	        linecounter		    , 00 			        ; Reset line counter 	
 			RETURN			
 ;=============== RECEIVE Subroutine =============; 
 RECEIVE: 
-		    INPUT	checkstatus		, statusReg
-			AND	    checkstatus     , 01 		 ; MASK STATUS REGISTER FOR rX Ready BIT
-			JUMP	Z				, RECEIVE			
-			INPUT   scratchbyte		, dataBus	 ; READY VALUE FROM RX ENGINE 
+		    INPUT	    checkstatus		, statusReg
+			AND	        checkstatus       , 01 		            ; MASK STATUS REGISTER FOR rX Ready BIT
+			JUMP	        Z				            , RECEIVE			
+			INPUT        scratchbyte		, dataBus	        ; READY VALUE FROM RX ENGINE 
 			RETURN
 			
 ;=============== Transmit Subroutine =============;			
 TRANSMIT: 		 
-            INPUT   checkstatus	   	, statusReg             
-            AND		checkstatus     , 02 		; Mask status register for tx ready bit 
-			JUMP	Z				, TRANSMIT	
-			OUTPUT  scratchbyte		, dataBus	; Send value to Tx Engine 
+            INPUT       checkstatus	   	, statusReg             
+            AND		   checkstatus        , 02 		            ; Mask status register for tx ready bit 
+			JUMP	       Z				            , TRANSMIT	
+			OUTPUT    scratchbyte		, dataBus	        ; Send value to Tx Engine 
 			RETURN			
 ;=============== BANNER Subroutine =============;			
 BANNER: 		 
 CSULBCECS460:
-			LOAD	scratchbyte		, 43			; C 
-			CALL	TRANSMIT 			
-			LOAD	scratchbyte		, 53			; S 
-			CALL	TRANSMIT 			
-			LOAD	scratchbyte		, 55			; U 
-			CALL	TRANSMIT 			
-			LOAD	scratchbyte		, 4C			; L 
-			CALL	TRANSMIT 			
-			LOAD	scratchbyte		, 42			; B 
-			CALL	TRANSMIT 
-			LOAD	scratchbyte		, 20			; <space> 
-			CALL	TRANSMIT 
-			LOAD	scratchbyte		, 43			; C 
-			CALL	TRANSMIT 
-			LOAD	scratchbyte		, 45			; E 
-			CALL	TRANSMIT 			
-			LOAD	scratchbyte		, 43			; C 
-			CALL	TRANSMIT              
-			LOAD	scratchbyte		, 53			; S 
-			CALL	TRANSMIT 			
-			LOAD	scratchbyte		, 20			; <space> 
-			CALL	TRANSMIT 
-			LOAD	scratchbyte		, 34			; 4 
-			CALL	TRANSMIT 	
-			LOAD	scratchbyte		, 36			; 6
-			CALL	TRANSMIT 		
-			LOAD	scratchbyte		, 30			; 0
-			CALL	TRANSMIT 		
-			CALL 	NEWLINE	
+			LOAD	    scratchbyte		    , 43			            ; C 
+			CALL	    TRANSMIT 			
+			LOAD	    scratchbyte		    , 53			            ; S 
+			CALL	    TRANSMIT 			
+			LOAD	    scratchbyte		    , 55			            ; U 
+			CALL	    TRANSMIT 			
+			LOAD	    scratchbyte		    , 4C			            ; L 
+			CALL	    TRANSMIT 			
+			LOAD	    scratchbyte		    , 42			            ; B 
+			CALL	    TRANSMIT 
+			LOAD	    scratchbyte		    , 20			            ; <space> 
+			CALL	    TRANSMIT 
+			LOAD	    scratchbyte		    , 43			            ; C 
+			CALL	    TRANSMIT 
+			LOAD	    scratchbyte		    , 45			            ; E 
+			CALL	    TRANSMIT 			
+			LOAD	    scratchbyte		    , 43			            ; C 
+			CALL	    TRANSMIT              
+			LOAD	    scratchbyte		    , 53			            ; S 
+			CALL	    TRANSMIT 			
+			LOAD	    scratchbyte		    , 20			            ; <space> 
+			CALL	    TRANSMIT 
+			LOAD	    scratchbyte		    , 34			            ; 4 
+			CALL	    TRANSMIT 	
+			LOAD	    scratchbyte		    , 36			            ; 6
+			CALL	    TRANSMIT 		
+			LOAD	    scratchbyte		    , 30			            ; 0
+			CALL	    TRANSMIT 		
+			CALL 	    NEWLINE	
 			RETURN 
 			
