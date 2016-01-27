@@ -12,7 +12,7 @@
 module BitCountUp(Clk, Rst, start, BTU, bitCount, done);
      input Clk, Rst; 
      input start, BTU; 
-	input [3:0] bitCount; 
+     input [3:0] bitCount; 
      output done;  
      
      reg [3:0] count; 
