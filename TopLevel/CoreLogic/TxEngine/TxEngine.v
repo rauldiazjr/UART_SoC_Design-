@@ -3,7 +3,7 @@
 ====================================================================================
 * File: TxEngine.v 
 ====================================================================================
-	The TxEngine module is an 8 bit sychronous loadable transmit engine. Operation is 
+The TxEngine module is an 8 bit sychronous loadable transmit engine. Operation is 
 executed on a high signal fron the tx_start port which triggers the load of an 
 8 bit register and signals 2 counters which handle baud rate timing and bit 
 transfers for the system. The tx_out will transmit an 11 bit value using a
@@ -11,7 +11,8 @@ transfers for the system. The tx_out will transmit an 11 bit value using a
 RS232 protocol which includes: 1 stop bit, 1 start bit, 8 bit data , and based on 
 the UART Config register, a Parity bit. Trailing ones, are followed after data has
 completed transmission. 
-	The UART configeration is set one time upon reset and stored in a 3 bit register 
+
+The UART configeration is set one time upon reset and stored in a 3 bit register 
 used in a procedural case statment. bit8_en port will determine if an 8 bit value 
 is transmitted, if the port is low by default the system will transmit 7 bits.
 parity_en port will determine if parity is detected on the input, and Odd_en
@@ -63,7 +64,7 @@ module TxEngine(Clk, Rst, data_in, tx_start, parity_en, bit8_en,
                /*8N1*/  5: parallel_in = { 1'b1, pipo_buf[7:0], 1'b0, 1'b1 }; 
                /*8E1*/  6: parallel_in = { C   , pipo_buf[7:0], 1'b0, 1'b1 }; 
                /*8O1*/  7: parallel_in = { D   , pipo_buf[7:0], 1'b0, 1'b1 }; 
-					/*7N1*/	default:parallel_in = { 1'b1,1'b1,pipo_buf[6:0],1'b0,1'b1}; 
+               /*7N1*/   default:parallel_in = { 1'b1,1'b1,pipo_buf[6:0],1'b0,1'b1}; 
           endcase
     
     end
@@ -121,7 +122,7 @@ module TxEngine(Clk, Rst, data_in, tx_start, parity_en, bit8_en,
     /*********************************************
                 Sequential block    
      **********************************************/  
-	 assign  Uart_config = {bit8_en, parity_en, odd_en};
+    assign  Uart_config = {bit8_en, parity_en, odd_en};
     always @(posedge Clk, negedge Rst) begin  
           /********************************
              One shot Uart Configuration 
@@ -133,8 +134,8 @@ module TxEngine(Clk, Rst, data_in, tx_start, parity_en, bit8_en,
              Load Enable buffer register 
           ********************************/ 
           
-          if(!Rst) 		  ld_buf <= 0;            else
-								  ld_buf <= tx_start; 
+          if(!Rst) ld_buf <= 0;            else
+                   ld_buf <= tx_start; 
                    
           /********************************
              PIPO buffer register 
@@ -143,6 +144,6 @@ module TxEngine(Clk, Rst, data_in, tx_start, parity_en, bit8_en,
           if(!Rst)        pipo_buf <= 8'b0;        else
           if(tx_start)    pipo_buf <= data_in;     else
                           pipo_buf <= pipo_buf;
-								  
+                          
      end 
 endmodule
