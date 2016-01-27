@@ -19,21 +19,15 @@
 ***********************************************************************************
 **********************************************************************************/
 module RSFlop(Clk, Rstb, R, S, Q);
-	input      Clk, Rstb; 
-	input      R, S; 
-	output reg Q;
+   input      Clk, Rstb; 
+   input      R, S; 
+   output reg Q;
      
-/*************Sequential block******************/	
-	always @(posedge Clk, negedge Rstb)
-		if(Rstb == 1'b0)           Q <= 1'b0; else		
-		if(S)			       		   Q <= 1'b1; else
-		if(R)				  				Q <= 1'b0; else
-											Q <= Q; 
-											
+/*************Sequential block******************/   
+   always @(posedge Clk, negedge Rstb)
+      if(Rstb == 1'b0)  Q <= 1'b0; else      
+      if(S)             Q <= 1'b1; else
+      if(R)             Q <= 1'b0; else
+                        Q <= Q; 
+                        
 endmodule
-/*		case({R,S}) 
-			2'b00: Q<= Q; 
-			2'b01: Q<= 1'b1; 
-			2'b10: Q<= 1'b0; 
-			2'b11: Q<= 1'bx; 
-		endcase*/
